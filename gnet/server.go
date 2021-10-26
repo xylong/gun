@@ -3,6 +3,8 @@ package gnet
 import (
 	"fmt"
 	"net"
+
+	"github.com/xylong/gun/iface"
 )
 
 // Server 服务
@@ -17,7 +19,7 @@ type Server struct {
 	Port int
 }
 
-func NewServer(name string) *Server {
+func NewServer(name string) iface.IServer {
 	return &Server{
 		Name:      name,
 		IPVersion: "tcp4",
