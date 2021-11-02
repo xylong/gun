@@ -6,11 +6,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/xylong/gun/gnet"
+	"github.com/xylong/gun/network"
 )
 
 func TestServer_Start(t *testing.T) {
-	s := gnet.NewServer("[gun v1.0.1]")
+	s := network.NewServer("[gun v1.0.1]")
 	s.Run()
 }
 
