@@ -1,6 +1,7 @@
 package network
 
 import (
+	"errors"
 	"fmt"
 	"net"
 
@@ -28,6 +29,17 @@ func NewServer(name string) iface.IServer {
 	}
 }
 
+// ClientCallBack 客户端回调
+// todo 定义当前客户端连接所绑定的handle，以后应该由用户自定义handle方法
+func ClientCallBack(conn *net.TCPConn, bytes []byte, size int) error {
+	fmt.Println("[connection handle] callback to client")
+	if _, err := conn.Write(bytes); err != nil {
+		return errors.New("callback to client error")
+	}
+
+	return nil
+}
+
 // Start 启动服务
 func (s *Server) Start() {
 	go func() {
@@ -46,6 +58,9 @@ func (s *Server) Start() {
 			return
 		}
 
+		// 客户端🆔
+		var clientID uint32 = 0
+
 		//! 3.阻塞等待客户端连接，处理业务
 		for {
 			tcpConn, err := listener.AcceptTCP()
@@ -54,21 +69,10 @@ func (s *Server) Start() {
 				continue
 			}
 
-			go func() {
-				for {
-					buf := make([]byte, 512)
-					size, err := tcpConn.Read(buf)
-					if err != nil {
-						fmt.Println("receive buf error: ", err)
-						continue
-					}
+			connection := NewConnection(tcpConn, clientID, ClientCallBack)
+			clientID++
 
-					if _, err := tcpConn.Write(buf[:size]); err != nil {
-						fmt.Println("send error: ", err)
-						continue
-					}
-				}
-			}()
+			go connection.Start()
 		}
 	}()
 }
@@ -82,5 +86,5 @@ func (s *Server) Run() {
 	s.Start()
 
 	// 阻塞
-	select{}
+	select {}
 }
