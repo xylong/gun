@@ -4,7 +4,7 @@
 ### 模块
 - [x] server模块
 - [x] 路由模块
-    - [ ] request
+    - [x] request
     - [ ] router
 - [ ] 全局配置
 - [ ] 消息封装
