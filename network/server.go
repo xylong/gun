@@ -1,7 +1,6 @@
 package network
 
 import (
-	"errors"
 	"fmt"
 	"net"
 
@@ -18,6 +17,8 @@ type Server struct {
 	IP string
 	// 端口
 	Port int
+	// 路由
+	Router iface.IRouter
 }
 
 func NewServer(name string) iface.IServer {
@@ -26,18 +27,8 @@ func NewServer(name string) iface.IServer {
 		IPVersion: "tcp4",
 		IP:        "0.0.0.0",
 		Port:      10000,
+		Router:    nil,
 	}
-}
-
-// ClientCallBack 客户端回调
-// todo 定义当前客户端连接所绑定的handle，以后应该由用户自定义handle方法
-func ClientCallBack(conn *net.TCPConn, bytes []byte, size int) error {
-	fmt.Println("[connection handle] callback to client")
-	if _, err := conn.Write(bytes); err != nil {
-		return errors.New("callback to client error")
-	}
-
-	return nil
 }
 
 // Start 启动服务
@@ -69,7 +60,7 @@ func (s *Server) Start() {
 				continue
 			}
 
-			connection := NewConnection(tcpConn, clientID, ClientCallBack)
+			connection := NewConnection(tcpConn, clientID, s.Router)
 			clientID++
 
 			go connection.Start()
@@ -87,4 +78,9 @@ func (s *Server) Run() {
 
 	// 阻塞
 	select {}
+}
+
+// AddRouter 添加路由
+func (s *Server) AddRouter(router iface.IRouter) {
+	s.Router = router
 }

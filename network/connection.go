@@ -14,18 +14,19 @@ type Connection struct {
 	ConnID uint32
 	// 连接是否关闭
 	isClosed bool
-	// 业务处理函数
-	handle   iface.HandleFunc
+	// 告知当前连接已退出
 	ExitChan chan bool
+	// 该连接处理的路由
+	Router iface.IRouter
 }
 
-func NewConnection(conn *net.TCPConn, connID uint32, callback iface.HandleFunc) *Connection {
+func NewConnection(conn *net.TCPConn, connID uint32, router iface.IRouter) *Connection {
 	return &Connection{
 		Conn:     conn,
 		ConnID:   connID,
 		isClosed: false,
-		handle:   callback,
 		ExitChan: make(chan bool, 1),
+		Router: router,
 	}
 }
 
@@ -37,17 +38,21 @@ func (c *Connection) Read() {
 
 	for {
 		buf := make([]byte, 512)
-		size, err := c.Conn.Read(buf)
+		_, err := c.Conn.Read(buf)
 		if err != nil {
 			fmt.Println("receive buf error:", err)
 			continue
 		}
 
-		//* 业务处理
-		if err := c.handle(c.Conn, buf, size); err != nil {
-			fmt.Println("ConnID:", c.ConnID, "handle error:", err)
-			break
-		}
+		// *执行注册的路由方法
+		go func(req iface.IRequest) {
+			c.Router.Before(req)
+			c.Router.Handle(req)
+			c.Router.After(req)
+		}(&Request{
+			conn: c,
+			data: buf,
+		})
 	}
 }
 
@@ -84,6 +89,6 @@ func (c *Connection) GetRemoteAddr() net.Addr {
 }
 
 // Send 发送数据
-func (c *Connection) Send() {
-
+func (c *Connection) Send(data []byte) error {
+	return nil
 }
